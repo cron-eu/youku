@@ -118,6 +118,7 @@ class YoukuHelper extends AbstractOEmbedHelper
         $doc->loadHTML($html);
 
         $title = 'Youku Video'; // Default value
+        $description = '';
         $image = '';
 
         $metas = $doc->getElementsByTagName('meta');
@@ -126,6 +127,9 @@ class YoukuHelper extends AbstractOEmbedHelper
             if($meta->getAttribute('property') == 'og:title') {
                 $title = $meta->getAttribute('content');
             }
+            if($meta->getAttribute('property') == 'og:description') {
+                $description = $meta->getAttribute('content');
+            }
             if($meta->getAttribute('property') == 'og:image') {
                 $image = $meta->getAttribute('content');
             }
@@ -133,6 +137,7 @@ class YoukuHelper extends AbstractOEmbedHelper
 
         return [
             'title' => $title,
+            'description' => $description,
             'width' => 480,
             'height' => 270,
             'author_name' => 'Youku',
@@ -140,4 +145,33 @@ class YoukuHelper extends AbstractOEmbedHelper
             'type' => 'video'
         ];
     }
+
+    /**
+     * Get meta data for OnlineMedia item
+     * Using the meta data from oEmbed
+     *
+     * @param File $file
+     * @return array with metadata
+     */
+    public function getMetaData(File $file)
+    {
+        $metadata = [];
+
+        $oEmbed = $this->getOEmbedData($this->getOnlineMediaId($file));
+
+        if ($oEmbed) {
+            $metadata['width'] = (int)$oEmbed['width'];
+            $metadata['height'] = (int)$oEmbed['height'];
+            if (empty($file->getProperty('title'))) {
+                $metadata['title'] = strip_tags($oEmbed['title']);
+            }
+            if (empty($file->getProperty('description'))) {
+                $metadata['description'] = trim(strip_tags($oEmbed['description']));
+            }
+            $metadata['author'] = $oEmbed['author_name'];
+        }
+
+        return $metadata;
+    }
+
 }
